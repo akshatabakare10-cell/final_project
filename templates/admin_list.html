@@ -1,0 +1,285 @@
+{# Inherits base layout for administrative portal #}
+{% extends "admin_base.html" %}
+{# Sets active navigation sidebar item according to the entity type #}
+{% set active_page = page_type %}
+{# Sets browser title to the current list page title #}
+{% set page_title = page_title %}
+
+{# Injects data table and management controls into content block #}
+{% block content %}
+<!-- Page header containing entity title and 'Add New' creation button -->
+<div class="flex-between" style="margin-bottom: 2rem;">
+    <!-- Page title -->
+    <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">{{ page_title }}</h1>
+    {# Show 'Add' action buttons for creatable entities #}
+    {% if page_type == 'packages' %}
+        <a href="{{ url_for('add_package') }}" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Package</a>
+    {% elif page_type == 'hotels' %}
+        <a href="{{ url_for('add_hotel') }}" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Hotel</a>
+    {% elif page_type == 'transport' %}
+        <a href="{{ url_for('add_transport') }}" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Transport</a>
+    {% endif %}
+</div>
+
+{# Filter and search bar when viewing customer bookings #}
+{% if page_type == 'bookings' %}
+<div class="card" style="margin-bottom: 2rem; padding: 1rem 1.25rem;">
+    <!-- Form submitting search parameters via GET -->
+    <form action="" method="GET" class="flex" style="gap: 1rem; align-items: center;">
+        <div class="form-group" style="margin: 0; flex-grow: 1; position: relative;">
+            <i class="fa-solid fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" name="q" style="padding-left: 2.75rem;" placeholder="Search by user or package..." value="{{ search|default('') }}">
+        </div>
+        <!-- Status filter dropdown (Pending, Approved, Completed, Cancelled) -->
+        <select name="status" style="width: auto; min-width: 150px;">
+            <option value="">All Statuses</option>
+            <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Approved" {% if selected_status == 'Approved' %}selected{% endif %}>Approved</option>
+            <option value="Completed" {% if selected_status == 'Completed' %}selected{% endif %}>Completed</option>
+            <option value="Cancelled" {% if selected_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+        <button type="submit" class="btn-secondary">Search</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Table container card -->
+<div class="table-card">
+    <table>
+        <!-- Dynamic header columns configured per page type -->
+        <thead>
+            <tr>
+                {% if page_type == 'users' %}
+                    <th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th>
+                {% elif page_type == 'packages' %}
+                    <th>ID</th><th>Package Name</th><th>Destination</th><th>Price</th><th>Duration</th><th style="text-align: right;">Actions</th>
+                {% elif page_type == 'hotels' %}
+                    <th>ID</th><th>Hotel Name</th><th>Destination</th><th>Room Type</th><th>Price / Night</th><th>Rating</th><th style="text-align: right;">Actions</th>
+                {% elif page_type == 'transport' %}
+                    <th>ID</th><th>Mode</th><th>Vehicle</th><th>Route</th><th>Price</th><th style="text-align: right;">Actions</th>
+                {% elif page_type == 'bookings' %}
+                    <th>ID</th><th>Traveler</th><th>Package</th><th>Travel Date</th><th>Guests</th><th>Total</th><th>Status</th><th style="text-align: right;">Actions</th>
+                {% elif page_type == 'payments' %}
+                    <th>ID</th><th>Traveler</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th>
+                {% elif page_type == 'trip_plans' %}
+                    <th>ID</th><th>Traveler</th><th>Destination</th><th>Style</th><th>Days</th><th>Budget</th><th>Created</th>
+                {% elif page_type in ['reports', 'user_reports'] %}
+                    <th>ID</th><th>Traveler</th><th>Service</th><th>Subject</th><th>Status</th><th>Date</th><th style="text-align: right;">Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <!-- Table body records rendering dynamically based on entity type -->
+        <tbody>
+            {# 1. Users List #}
+            {% if page_type == 'users' %}
+                {% for item in users %}
+                <tr>
+                    <td>#{{ item.user_id }}</td>
+                    <td style="font-weight: 600;">{{ item.full_name }}</td>
+                    <td>{{ item.email }}</td>
+                    <td>{{ item.phone }}</td>
+                    <td style="font-size: 0.85rem;">{{ item.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-state">No registered users found.</td></tr>
+                {% endfor %}
+
+            {# 2. Tour Packages List #}
+            {% elif page_type == 'packages' %}
+                {% for item in packages %}
+                <tr>
+                    <td>#{{ item.package_id }}</td>
+                    <td style="font-weight: 600;">{{ item.package_name }}</td>
+                    <td>{{ item.destination_name }}</td>
+                    <td class="text-accent" style="font-weight: 700;">{{ item.price|money }}</td>
+                    <td>{{ item.duration }}</td>
+                    <td style="text-align: right;">
+                        <div class="flex" style="justify-content: flex-end; gap: 0.5rem;">
+                            <a href="{{ url_for('edit_package', package_id=item.package_id) }}" class="btn-secondary btn-sm">Edit</a>
+                            <form action="{{ url_for('delete_package') }}" method="POST" onsubmit="return confirm('Delete this package?');" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.package_id }}">
+                                <button type="submit" class="btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No packages found.</td></tr>
+                {% endfor %}
+
+            {# 3. Hotels List #}
+            {% elif page_type == 'hotels' %}
+                {% for item in hotels %}
+                <tr>
+                    <td>#{{ item.hotel_id }}</td>
+                    <td style="font-weight: 600;">{{ item.hotel_name }}</td>
+                    <td>{{ item.destination_name }}</td>
+                    <td>{{ item.room_type }}</td>
+                    <td class="text-accent" style="font-weight: 700;">{{ item.price_per_night|money }}</td>
+                    <td>{{ item.rating }} <i class="fa-solid fa-star" style="color: var(--accent); font-size: 0.8rem;"></i></td>
+                    <td style="text-align: right;">
+                        <div class="flex" style="justify-content: flex-end; gap: 0.5rem;">
+                            <a href="{{ url_for('edit_hotel', hotel_id=item.hotel_id) }}" class="btn-secondary btn-sm">Edit</a>
+                            <form action="{{ url_for('delete_hotel') }}" method="POST" onsubmit="return confirm('Delete this hotel?');" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.hotel_id }}">
+                                <button type="submit" class="btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state">No hotels found.</td></tr>
+                {% endfor %}
+
+            {# 4. Transport List #}
+            {% elif page_type == 'transport' %}
+                {% for item in transport_rows %}
+                <tr>
+                    <td>#{{ item.transport_id }}</td>
+                    <td style="font-weight: 600;">{{ item.mode }}</td>
+                    <td>{{ item.vehicle_name }}</td>
+                    <td>{{ item.source_name ~ ' → ' ~ item.destination_name if item.source_name else '-' }}</td>
+                    <td class="text-accent" style="font-weight: 700;">{{ item.price|money }}</td>
+                    <td style="text-align: right;">
+                        <div class="flex" style="justify-content: flex-end; gap: 0.5rem;">
+                            <a href="{{ url_for('edit_transport', transport_id=item.transport_id) }}" class="btn-secondary btn-sm">Edit</a>
+                            <form action="{{ url_for('delete_transport') }}" method="POST" onsubmit="return confirm('Delete this transport?');" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.transport_id }}">
+                                <button type="submit" class="btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No transport options found.</td></tr>
+                {% endfor %}
+
+            {# 5. Bookings List with Approve, Reject, and Complete controls #}
+            {% elif page_type == 'bookings' %}
+                {% for item in bookings %}
+                <tr>
+                    <td>#{{ item.booking_id }}</td>
+                    <td style="font-weight: 600;">{{ item.full_name }}</td>
+                    <td>{{ item.package_name }}</td>
+                    <td>{{ item.travel_date }}</td>
+                    <td>{{ item.travelers }}</td>
+                    <td class="text-accent" style="font-weight: 700;">{{ item.total_price|money }}</td>
+                    <td>
+                        {% set st = (item.status or 'Pending')|lower %}
+                        <span class="badge badge-{{ 'approved' if st in ['approved', 'confirmed', 'completed'] else ('pending' if st == 'pending' else 'cancelled') }}">{{ item.status }}</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div class="flex" style="justify-content: flex-end; gap: 0.5rem;">
+                            {% if st == 'pending' %}
+                            <form action="{{ url_for('approve_booking') }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.booking_id }}">
+                                <button type="submit" class="btn-primary btn-sm">Approve</button>
+                            </form>
+                            <form action="{{ url_for('reject_booking') }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.booking_id }}">
+                                <button type="submit" class="btn-danger btn-sm">Reject</button>
+                            </form>
+                            {% elif st == 'approved' %}
+                            <form action="{{ url_for('complete_booking') }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.booking_id }}">
+                                <button type="submit" class="btn-secondary btn-sm">Complete</button>
+                            </form>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty-state">No bookings found.</td></tr>
+                {% endfor %}
+
+            {# 6. Payments List #}
+            {% elif page_type == 'payments' %}
+                {% for item in payments %}
+                <tr>
+                    <td>#{{ item.payment_id }}</td>
+                    <td style="font-weight: 600;">{{ item.full_name or 'Traveler' }}</td>
+                    <td class="text-accent" style="font-weight: 700;">{{ item.amount|money }}</td>
+                    <td style="text-transform: capitalize;">{{ item.payment_method }}</td>
+                    <td><span class="badge badge-approved">{{ item.status }}</span></td>
+                    <td style="font-size: 0.85rem;">{{ item.payment_date }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No payment records found.</td></tr>
+                {% endfor %}
+
+            {# 7. Custom Trip Plans List #}
+            {% elif page_type == 'trip_plans' %}
+                {% for item in trip_plans %}
+                <tr>
+                    <td>#{{ item.plan_id }}</td>
+                    <td style="font-weight: 600;">{{ item.full_name or 'Traveler' }}</td>
+                    <td class="text-primary" style="font-weight: 600;">{{ item.destination }}</td>
+                    <td>{{ item.trip_style }}</td>
+                    <td>{{ item.days }} days</td>
+                    <td class="text-accent" style="font-weight: 700;">{{ item.total_estimate|money }}</td>
+                    <td style="font-size: 0.85rem;">{{ item.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state">No saved trip plans found.</td></tr>
+                {% endfor %}
+
+            {# 8. Customer Support Tickets List with Resolve / Reject actions #}
+            {% elif page_type in ['reports', 'user_reports'] %}
+                {% for item in reports %}
+                <tr>
+                    <td>#{{ item.report_id }}</td>
+                    <td style="font-weight: 600;">{{ item.full_name or 'Traveler' }}</td>
+                    <td>{{ item.service_type }}</td>
+                    <td>{{ item.subject }}</td>
+                    <td>
+                        {% set st = (item.status or 'Pending')|lower %}
+                        <span class="badge badge-{{ 'approved' if st == 'resolved' else ('pending' if st == 'pending' else 'cancelled') }}">{{ item.status }}</span>
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ item.created_at }}</td>
+                    <td style="text-align: right;">
+                        <div class="flex" style="justify-content: flex-end; gap: 0.5rem;">
+                            {% if st == 'pending' %}
+                            <form action="{{ url_for('update_user_report_status') }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.report_id }}">
+                                <input type="hidden" name="status" value="Resolved">
+                                <button type="submit" class="btn-primary btn-sm">Resolve</button>
+                            </form>
+                            <form action="{{ url_for('update_user_report_status') }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="id" value="{{ item.report_id }}">
+                                <input type="hidden" name="status" value="Rejected">
+                                <button type="submit" class="btn-danger btn-sm">Reject</button>
+                            </form>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state">No support tickets found.</td></tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+
+    {# Pagination controls for multi-page tables #}
+    {% if pagination and pagination.pages > 1 %}
+    <div style="padding: 1.25rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border);">
+        {% for p in range(1, pagination.pages + 1) %}
+            <a href="?page={{ p }}{% if search %}&q={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn-{% if p == pagination.page %}primary{% else %}secondary{% endif %} btn-sm">{{ p }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{# Closes content block #}
+{% endblock %}

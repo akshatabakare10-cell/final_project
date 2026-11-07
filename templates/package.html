@@ -1,0 +1,133 @@
+{# Inherits customer base layout #}
+{% extends "user_base.html" %}
+{# Highlights booking tab in navigation #}
+{% set active_page = 'booking' %}
+{# Sets browser title to the package name #}
+{% set page_title = package.package_name %}
+
+{# Injects package details layout into content block #}
+{% block content %}
+<!-- Page wrapper container -->
+<div class="container">
+    <!-- Breadcrumb navigation -->
+    <nav style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+        <a href="{{ url_for('home') }}">Home</a> /
+        <a href="{{ url_for('booking') }}">Packages</a> /
+        <span class="text-primary">{{ package.package_name }}</span>
+    </nav>
+
+    <!-- Two-column hero: Left for package image, Right for booking summary & price -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Left: Image display container -->
+        <div>
+            <div style="height: 400px; background-color: var(--surface); border-radius: 1rem; overflow: hidden; margin-bottom: 1rem;">
+                {# Display package image if available #}
+                {% if package.image_filename %}
+                <img src="{{ url_for('static', filename='image/' + package.image_filename) }}" alt="{{ package.package_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: Summary details and Book Now CTA -->
+        <div class="card">
+            <!-- Category badge -->
+            <span class="badge badge-approved">{{ package.category if package.category else 'Standard' }}</span>
+            <!-- Package title -->
+            <h1 style="margin: 1rem 0 0.5rem 0;">{{ package.package_name }}</h1>
+            <!-- Destination location pin -->
+            <p class="text-muted" style="margin-bottom: 1.5rem;"><i class="fa-solid fa-location-dot"></i> {{ package.destination_name }}</p>
+
+            <!-- Highlights checklist -->
+            <ul style="list-style: none; padding: 0; margin: 0 0 2rem 0; display: grid; gap: 1rem;">
+                <li><i class="fa-solid fa-clock text-primary" style="width: 24px;"></i> {{ package.duration }} Days</li>
+                <li><i class="fa-solid fa-users text-primary" style="width: 24px;"></i> Up to {{ package.travelers_limit }} Travelers</li>
+                <li><i class="fa-solid fa-coffee text-primary" style="width: 24px;"></i> Breakfast Included</li>
+                <li><i class="fa-solid fa-binoculars text-primary" style="width: 24px;"></i> Sightseeing included</li>
+            </ul>
+
+            <!-- Formatted price -->
+            <h2 style="margin: 0 0 1.5rem 0; color: var(--accent); font-size: 2.5rem;">{{ package.price|money }}<span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">/person</span></h2>
+
+            <!-- Best time to visit prompt -->
+            <div style="background: var(--surface-hover); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                <p style="margin: 0; font-size: 0.875rem;"><i class="fa-solid fa-calendar-check text-primary"></i> <strong>Best Time:</strong> Oct to March</p>
+            </div>
+
+            <!-- Booking form taking traveler directly into checkout flow -->
+            <form action="{{ url_for('book_package', package_id=package.package_id) }}" method="POST" style="margin-top: 1rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Travel Date</label>
+                        <input type="date" name="travel_date" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Travelers</label>
+                        <input type="number" name="travelers" value="1" min="1" max="{{ package.travelers_limit or 10 }}" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary w-100" style="padding: 0.9rem; font-size: 1.05rem;">
+                    <i class="fa-solid fa-bolt" style="margin-right: 0.5rem;"></i> Book Now &rarr;
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overview section heading (kept clean with only Overview as requested) -->
+    <div style="border-bottom: 2px solid var(--primary); margin-bottom: 1.5rem; display: inline-block; padding-bottom: 0.5rem;">
+        <h2 style="margin: 0; color: var(--primary); font-size: 1.35rem; font-weight: 600;">Overview</h2>
+    </div>
+
+    <!-- Package narrative description -->
+    <div style="margin-bottom: 3rem; line-height: 1.6;">
+        <p>{{ package.description }}</p>
+    </div>
+
+    <!-- Customer reviews and feedback section -->
+    <div class="card">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Customer Reviews</h3>
+        <!-- Rating badge summary -->
+        <div style="display: inline-block; background: var(--surface-hover); padding: 0.5rem 1rem; border-radius: 2rem; margin-bottom: 2rem;">
+            <span style="font-weight: 600; color: var(--accent);"><i class="fa-solid fa-star"></i> {{ review_summary.average_rating|default('0.0') }} / 5</span>
+            <span class="text-muted" style="margin-left: 0.5rem;">&middot; {{ review_summary.review_count|default(0) }} reviews</span>
+        </div>
+
+        {# Only travelers who have an approved/completed booking can submit a review #}
+        {% if reviewable_booking and not existing_review %}
+        <div style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
+            <h4 style="margin-top: 0;">Leave a Review</h4>
+            <form action="{{ url_for('submit_package_review', package_id=package.package_id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="booking_id" value="{{ reviewable_booking.booking_id }}">
+                <div class="form-group">
+                    <label>Rating (1-5)</label>
+                    <input type="number" name="rating" min="1" max="5" required>
+                </div>
+                <div class="form-group">
+                    <textarea name="comment" rows="3" placeholder="Share your experience..." required></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Submit Review</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Reviews list -->
+        <div>
+            {% if reviews %}
+                {% for r in reviews %}
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <strong>{{ r.full_name|default('User') }}</strong>
+                        <span style="color: var(--accent);"><i class="fa-solid fa-star"></i> {{ r.rating }}</span>
+                    </div>
+                    <p class="text-muted" style="margin: 0;">{{ r.comment }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">No reviews yet for this package.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{# Closes content block #}
+{% endblock %}

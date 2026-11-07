@@ -1,0 +1,148 @@
+{# Inherits customer base layout #}
+{% extends "user_base.html" %}
+{# Highlights payment in header #}
+{% set active_page = 'payment' %}
+{# Sets browser tab title to Booking & Payment #}
+{% set page_title = 'Booking & Payment' %}
+
+{# Injects payment checkout flow into content block #}
+{% block content %}
+{# Sets helper variables to safely extract package and pricing information #}
+{% set info = checkout or summary or {} %}
+{% set pkg = info.package_booking or {} %}
+
+<!-- Page container -->
+<div class="container">
+    <!-- Breadcrumb navigation trail -->
+    <nav style="margin-bottom: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+        <a href="{{ url_for('home') }}">Home</a> /
+        <a href="{{ url_for('user_dashboard') }}">Bookings</a> /
+        <span class="text-primary" style="font-weight: 600;">New Booking</span>
+    </nav>
+
+    <!-- Payment submission form posting to payment route -->
+    <form action="{{ url_for('payment') }}" method="POST">
+        <!-- CSRF security token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Two-column checkout layout -->
+        <div class="grid-2">
+            <!-- Left column: Order and booking summary -->
+            <div class="card">
+                <h2 style="margin: 0 0 1.5rem 0; font-size: 1.4rem; font-weight: 700;">Booking Details</h2>
+                <!-- Selected package name -->
+                <div class="form-group">
+                    <label>Package</label>
+                    <input type="text" value="{{ pkg.package_name if pkg and pkg.package_name else 'Custom Travel Package' }}" readonly style="font-weight: 600;">
+                </div>
+                <!-- Check-in and check-out dates -->
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label>Check In</label>
+                        <input type="text" value="{{ pkg.travel_date or 'Flexible / Immediate' }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Check Out</label>
+                        <input type="text" value="End of Itinerary" readonly>
+                    </div>
+                </div>
+                <!-- Travelers headcount -->
+                <div class="form-group">
+                    <label>Travelers</label>
+                    <input type="text" value="{{ pkg.travelers or 1 }} Traveler{% if (pkg.travelers or 1) > 1 %}s{% endif %}" readonly>
+                </div>
+                <!-- Grand total pricing display -->
+                <div style="padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                    <span style="display: block; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Total Price</span>
+                    <h1 style="margin: 0; color: var(--accent); font-size: 2.5rem; font-weight: 800;">
+                        {{ (info.total_amount if info and info.total_amount else (pkg.total_price or 0))|money }}
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Right column: Traveler details and payment gateway selection -->
+            <div class="card">
+                <h2 style="margin: 0 0 1.5rem 0; font-size: 1.4rem; font-weight: 700;">Traveler Details</h2>
+                <!-- Full name on card -->
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="card_name" value="{{ session.get('user_name', '') }}" placeholder="Akshata Bakare" required>
+                </div>
+                <!-- Contact email and phone -->
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="traveler_email" value="{{ session.get('user_email', '') }}" placeholder="akshata@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" name="traveler_phone" placeholder="9876543210">
+                    </div>
+                </div>
+
+                <!-- Payment method selection dropdown -->
+                <h3 style="margin: 1.5rem 0 1rem 0; font-size: 1.15rem; font-weight: 600;">Payment Method</h3>
+                <div class="form-group">
+                    <select name="method" id="payment_method_select" onchange="togglePaymentInputs(this.value)">
+                        <option value="card">Credit / Debit Card</option>
+                        <option value="upi">UPI (GPay, PhonePe, Paytm)</option>
+                        <option value="bank">Net Banking</option>
+                        <option value="cash">Pay on Arrival / Cash</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic card input fields -->
+                <div id="card_inputs_section">
+                    <div class="form-group">
+                        <input type="text" name="card_number" placeholder="Card Number (16 digits)" maxlength="16">
+                    </div>
+                    <div class="grid-2" style="gap: 1rem;">
+                        <input type="text" name="expiry" placeholder="MM/YY" maxlength="5" style="background: var(--surface-hover); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 14px;">
+                        <input type="password" name="cvv" placeholder="CVV (3 digits)" maxlength="3" style="background: var(--surface-hover); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 14px;">
+                    </div>
+                </div>
+
+                <!-- Dynamic UPI input field -->
+                <div id="upi_inputs_section" style="display: none;">
+                    <div class="form-group">
+                        <input type="text" name="upi" placeholder="UPI ID (e.g. name@okaxis)">
+                    </div>
+                </div>
+
+                <!-- Dynamic Net Banking bank dropdown -->
+                <div id="bank_inputs_section" style="display: none;">
+                    <div class="form-group">
+                        <select name="bank">
+                            <option value="">Select Your Bank</option>
+                            <option value="HDFC">HDFC Bank</option>
+                            <option value="SBI">State Bank of India</option>
+                            <option value="ICICI">ICICI Bank</option>
+                            <option value="Axis">Axis Bank</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Coupon discount code input -->
+                <div class="form-group">
+                    <label>Coupon Code</label>
+                    <input type="text" name="coupon_code" placeholder="PROMO2026" style="text-transform: uppercase;">
+                </div>
+
+                <!-- Payment confirmation button -->
+                <button type="submit" class="btn-primary w-100" style="padding: 1rem; font-size: 1.1rem;">
+                    Proceed to Payment &rarr;
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript to dynamically toggle payment input fields based on selected method -->
+<script>
+function togglePaymentInputs(method) {
+    document.getElementById('card_inputs_section').style.display = (method === 'card') ? 'block' : 'none';
+    document.getElementById('upi_inputs_section').style.display = (method === 'upi') ? 'block' : 'none';
+    document.getElementById('bank_inputs_section').style.display = (method === 'bank') ? 'block' : 'none';
+}
+</script>
+{# Closes content block #}
+{% endblock %}

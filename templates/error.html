@@ -1,0 +1,36 @@
+{# Inherits the common navigation bar and footer layout from user_base.html #}
+{% extends "user_base.html" %}
+{# Sets the browser page title to 'Error' for this view #}
+{% set page_title = 'Error' %}
+
+{# Injects this error card into the base layout's content block #}
+{% block content %}
+<!-- Outer centering container to position the error card vertically and horizontally in the viewport -->
+<div class="container" style="min-height: calc(100vh - 200px); display: flex; align-items: center; justify-content: center;">
+    <!-- Styled error card container with danger border highlight -->
+    <div class="card text-center" style="max-width: 500px; width: 100%; border: 1px solid rgba(239,68,68,0.2);">
+        <!-- Circular icon badge highlighting danger status -->
+        <div style="width: 80px; height: 80px; background: var(--danger-soft); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+            <!-- FontAwesome warning triangle alert icon -->
+            <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger);"></i>
+        </div>
+        <!-- Error heading text displayed to the user -->
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem;">Oops! Something went wrong</h1>
+        <!-- Descriptive error message passed dynamically from Flask or generic fallback -->
+        <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+            {# Outputs the specific error message if passed, otherwise displays generic message #}
+            {{ message if message else 'An unexpected error occurred while processing your request.' }}
+        </p>
+        <!-- Primary button redirecting the customer back to the safe home page -->
+        <a href="{{ url_for('home') }}" class="btn-primary">
+            <!-- Home icon inside the button -->
+            <i class="fas fa-home" style="margin-right: 0.5rem;"></i> Go Home
+        </a>
+        <!-- Secondary button invoking JavaScript browser history back function -->
+        <button onclick="window.history.back()" style="display: block; width: 100%; margin-top: 1rem; background: transparent; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 0.9rem;">
+            Or go back to previous page
+        </button>
+    </div>
+</div>
+{# Closes the content block #}
+{% endblock %}

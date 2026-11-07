@@ -1,0 +1,147 @@
+<!-- Standard HTML5 document type definition -->
+<!DOCTYPE html>
+<!-- Opening HTML root element set to English language -->
+<html lang="en">
+<!-- Document head for metadata, stylesheets, fonts, and responsive settings -->
+<head>
+    <!-- Defines character encoding for the website -->
+    <meta charset="UTF-8">
+    <!-- Configures responsive viewport scaling on mobile, tablet, and desktop screens -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dynamic page title block with default fallback to system title -->
+    <title>{% if page_title %}{{ page_title }} - TravelWorld{% else %}TravelWorld - Tourism Management System{% endif %}</title>
+    <!-- Preconnect hint to accelerate Google Fonts DNS lookup -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Preconnect hint to accelerate Google Fonts static asset loading -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Imports Poppins font family in multiple weights (300 to 800) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Imports FontAwesome icon stylesheet CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Links main project CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<!-- Body element housing navigation, flash alerts, page content, and footer -->
+<body>
+    <!-- Top navigation header bar -->
+    <nav class="navbar">
+        <!-- Logo and brand link navigating to homepage -->
+        <a href="{{ url_for('home') }}" class="brand">
+            <!-- Globe brand icon -->
+            <i class="fa-solid fa-globe brand-icon"></i>
+            <!-- Brand text wrapper -->
+            <div>
+                <!-- Primary brand title with highlight on World -->
+                <div class="brand-name">Travel<span>World</span></div>
+                <!-- Brand tagline -->
+                <div class="brand-subtitle">Tourism Management System</div>
+            </div>
+        </a>
+
+        <!-- Main navigation link container -->
+        <div class="nav-links">
+            <!-- Home navigation link highlighted when active_page is 'home' -->
+            <a href="{{ url_for('home') }}" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+            <!-- Packages navigation link highlighted when active_page is 'booking' -->
+            <a href="{{ url_for('booking') }}" class="nav-link {% if active_page == 'booking' %}active{% endif %}">Packages</a>
+            <!-- Dropdown menu container for search, planner, and wishlist -->
+            <div class="dropdown">
+                <!-- Dropdown toggle header button with down caret -->
+                <span class="nav-link {% if active_page in ['search', 'planner', 'wishlist'] %}active{% endif %}">Explore <i class="fa-solid fa-caret-down"></i></span>
+                <!-- Dropdown options card -->
+                <div class="dropdown-menu">
+                    <!-- Link to search and filter trips -->
+                    <a href="{{ url_for('search_packages') }}" class="dropdown-item">Search Trips</a>
+                    <!-- Link to interactive trip planner -->
+                    <a href="{{ url_for('planner') }}" class="dropdown-item">Trip Planner</a>
+                    <!-- Link to saved wishlist packages -->
+                    <a href="{{ url_for('wishlist') }}" class="dropdown-item">Wishlist</a>
+                </div>
+            </div>
+            {# Only show Bookings menu if a customer is logged in #}
+            {% if user_name %}
+            <!-- Bookings dropdown container -->
+            <div class="dropdown">
+                <!-- Dropdown toggle for bookings and payments -->
+                <span class="nav-link {% if active_page in ['dashboard', 'payment_history'] %}active{% endif %}">Bookings <i class="fa-solid fa-caret-down"></i></span>
+                <!-- Dropdown items list -->
+                <div class="dropdown-menu">
+                    <!-- Link to user's bookings dashboard -->
+                    <a href="{{ url_for('user_dashboard') }}" class="dropdown-item">My Bookings</a>
+                    <!-- Link to transaction history -->
+                    <a href="{{ url_for('payment_history') }}" class="dropdown-item">Payment History</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right navigation action items (login or profile avatar) -->
+        <div class="nav-actions">
+            {% if session.get('admin_id') %}
+                <!-- Quick link to Admin Dashboard when logged in as admin -->
+                <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem;">
+                    <i class="fa-solid fa-gauge"></i> Admin Panel
+                </a>
+            {% endif %}
+
+            {# Show user avatar dropdown if logged in #}
+            {% if user_name %}
+                <!-- Right-aligned avatar dropdown -->
+                <div class="dropdown right">
+                    <!-- User initial avatar circle -->
+                    <div class="user-avatar">{{ user_name[0] | upper }}</div>
+                    <!-- Dropdown menu with profile actions -->
+                    <div class="dropdown-menu right">
+                        <!-- Profile link -->
+                        <a href="{{ url_for('profile') }}" class="dropdown-item">Profile</a>
+                        <!-- Support tickets link -->
+                        <a href="{{ url_for('report_issue') }}" class="dropdown-item">Support Tickets</a>
+                        <!-- Sign out link -->
+                        <a href="{{ url_for('logout') }}" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Customer Login button for guest users -->
+                <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
+                <!-- Admin portal access link visible on home navigation -->
+                <a href="{{ url_for('admin_login') }}" class="btn-secondary" style="display: flex; align-items: center; gap: 0.4rem;" title="Administrator Access">
+                    <i class="fa-solid fa-lock"></i> Admin
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main central content container -->
+    <main class="main-content">
+        <!-- Container for temporary flash alert notifications -->
+        <div class="flash-messages">
+            {# Fetch all categorized flash messages (success, error, info) #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {# If any messages exist #}
+                {% if messages %}
+                    {# Loop through each message with its category #}
+                    {% for category, message in messages %}
+                        <!-- Render styled alert badge -->
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {# Placeholder block where child templates inject their specific page body #}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global website footer -->
+    <footer class="footer">
+        <!-- Copyright text -->
+        <p>&copy; 2026 TravelWorld. All rights reserved.</p>
+        <!-- Footer legal and informational links, with direct link to Admin portal -->
+        <p style="margin-top: 10px;">
+            <a href="#">Privacy Policy</a> |
+            <a href="#">Terms of Service</a> |
+            <a href="#">FAQ</a> |
+            <a href="{{ url_for('admin_login') }}"><i class="fa-solid fa-lock"></i> Admin Login</a>
+        </p>
+    </footer>
+</body>
+</html>

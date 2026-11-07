@@ -1,0 +1,76 @@
+<!-- Standard HTML5 document type declaration -->
+<!DOCTYPE html>
+<!-- Opening HTML tag with English language specification -->
+<html lang="en">
+<!-- Document head containing metadata, title, fonts, and stylesheets -->
+<head>
+    <!-- Sets character encoding to UTF-8 for universal character support -->
+    <meta charset="UTF-8">
+    <!-- Configures responsive viewport scaling for mobile and desktop screens -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Browser tab title for the administrator login page -->
+    <title>Admin Login - TravelWorld</title>
+    <!-- Loads Google Font 'Poppins' with weights 300 to 700 -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Loads FontAwesome icon library CDN for iconography -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Links the custom project stylesheet via Flask's static url_for generator -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<!-- Body element styled with centered auth layout class -->
+<body class="auth-body">
+    <!-- Authentication card wrapper centering login contents -->
+    <div class="auth-card" style="text-align: center;">
+        <!-- Circular icon container emphasizing security lock -->
+        <div style="width: 4rem; height: 4rem; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1rem; font-size: 1.5rem;">
+            <!-- FontAwesome padlock icon representing security -->
+            <i class="fa-solid fa-lock"></i>
+        </div>
+        <!-- Main branding title with brand color highlight on 'World' -->
+        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 700;">Travel<span style="color: var(--primary);">World</span></h1>
+        <!-- Subtitle identifying this as administrator access -->
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Admin Panel Access</p>
+
+        {# Jinja block to extract any flashed session messages from Flask #}
+        {% with messages = get_flashed_messages() %}
+            {# Check if there are any flashed messages to display #}
+            {% if messages %}
+                {# Loop through each message in the list #}
+                {% for message in messages %}
+                    <!-- Render message in an alert box with error styling -->
+                    <div class="alert alert-error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {# Check if direct error variable was passed to template and render it #}
+        {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+
+        <!-- Administrator login form posting credentials to admin_login route -->
+        <form action="{{ url_for('admin_login') }}" method="POST" style="text-align: left;">
+            <!-- Hidden CSRF security token input to prevent cross-site request forgery attacks -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- Form group container for admin email address field -->
+            <div class="form-group">
+                <!-- Label for admin email input -->
+                <label for="email">Admin Email</label>
+                <!-- Email input field with required validation -->
+                <input type="email" id="email" name="email" required placeholder="admin@travelworld.com">
+            </div>
+            <!-- Form group container for admin password field -->
+            <div class="form-group">
+                <!-- Label for admin password input -->
+                <label for="password">Password</label>
+                <!-- Password input field with bullet masking and required attribute -->
+                <input type="password" id="password" name="password" required placeholder="••••••••">
+            </div>
+            <!-- Submit button to trigger administrator authentication -->
+            <button type="submit" class="btn-primary w-100">Login to Dashboard</button>
+        </form>
+        <!-- Link allowing user to navigate back to the public homepage -->
+        <a href="{{ url_for('home') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.875rem; display: inline-block; margin-top: 1rem;">
+            <!-- Back arrow icon -->
+            <i class="fa-solid fa-arrow-left"></i> Back to Site
+        </a>
+    </div>
+</body>
+</html>

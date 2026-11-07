@@ -1,0 +1,116 @@
+{# Inherits navigation bar, fonts, and footer from user_base.html #}
+{% extends "user_base.html" %}
+{# Highlights Packages in navigation header #}
+{% set active_page = 'booking' %}
+{# Sets browser window title to Available Packages #}
+{% set page_title = 'Available Packages' %}
+
+{# Injects package catalog into page content block #}
+{% block content %}
+<!-- Main page container -->
+<div class="container">
+    <!-- Header title section with breadcrumb link -->
+    <header class="page-header text-center">
+        <!-- Main heading -->
+        <h1>Available Packages</h1>
+        <!-- Breadcrumb link back to home -->
+        <p><a href="{{ url_for('home') }}" style="color: var(--primary);">Home</a> / Packages</p>
+    </header>
+
+    <!-- Stat overview cards showcasing total package count -->
+    <div class="stat-row" style="max-width: 600px; margin: 0 auto 2rem;">
+        <div class="stat-card text-center">
+            <!-- Dynamic package count -->
+            <h3 style="color: var(--primary); font-size: 1.5rem; font-weight: 700;">{{ packages|length }}</h3>
+            <p style="color: var(--text-secondary); font-size: 0.875rem;">Packages Available</p>
+        </div>
+        <div class="stat-card text-center">
+            <h3 style="color: var(--accent); font-size: 1.5rem; font-weight: 700;">Best Deals</h3>
+            <p style="color: var(--text-secondary); font-size: 0.875rem;">Starting From</p>
+        </div>
+    </div>
+
+    <!-- Category filter buttons for client-side JavaScript filtering -->
+    <div class="filters">
+        <button class="filter-pill active">All</button>
+        <button class="filter-pill">Honeymoon</button>
+        <button class="filter-pill">Family</button>
+        <button class="filter-pill">Adventure</button>
+        <button class="filter-pill">Beach</button>
+        <button class="filter-pill">Hill Station</button>
+    </div>
+
+    <!-- Responsive packages card grid -->
+    <div class="packages-grid">
+        {# Check if any packages exist #}
+        {% if packages %}
+            {# Iterate through all travel packages #}
+            {% for package in packages %}
+            <!-- Individual package card with data-category attribute for JS filter -->
+            <div class="package-card" data-category="{{ package.category }}">
+                <div class="card-content">
+                    <div style="margin-bottom: 1rem;">
+                        <!-- Category badge -->
+                        <span class="badge badge-approved">{{ package.category if package.category else 'Standard' }}</span>
+                        <!-- Package title -->
+                        <h3 class="card-title">{{ package.package_name }}</h3>
+                        <!-- Destination location pin -->
+                        <div class="card-location">
+                            <i class="fas fa-map-marker-alt"></i> {{ package.destination_name }}
+                        </div>
+                    </div>
+                    <!-- Duration and traveler limits metadata -->
+                    <div class="card-meta">
+                        <span><i class="fas fa-clock"></i> {{ package.duration }} Days</span>
+                        <span><i class="fas fa-users"></i> Max {{ package.travelers_limit }}</span>
+                        {# Display start date if scheduled #}
+                        {% if package.start_date %}
+                        <span><i class="fas fa-calendar-alt"></i> {{ package.start_date }}</span>
+                        {% endif %}
+                    </div>
+                    <!-- Divider line -->
+                    <hr style="border: 0; height: 1px; background: var(--border); margin-bottom: 1rem;">
+                    <!-- Price formatted with ₹ currency symbol -->
+                    <div class="card-price">
+                        {{ package.price|money }} <small>/person</small>
+                    </div>
+                    <!-- Action buttons: both link to detail page so user picks date/travelers before booking -->
+                    <div class="card-actions">
+                        <a href="{{ url_for('package_details', package_id=package.package_id) }}" class="btn-secondary btn-sm">Details</a>
+                        <!-- Select button goes to detail page where user fills travel date & travelers then books -->
+                        <a href="{{ url_for('package_details', package_id=package.package_id) }}" class="btn-primary btn-sm">Select &rarr;</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty state when no packages are available in the database -->
+            <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--surface); border-radius: 16px; border: 1px dashed var(--border);">
+                <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--text); font-size: 1.25rem;">No Packages Available</h3>
+                <p style="color: var(--text-secondary);">Check back later for exciting new travel deals.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript handling category button filtering in realtime without page reload -->
+<script>
+    const filterBtns = document.querySelectorAll('.filter-pill');  // Select all category filter buttons
+    const pkgCards = document.querySelectorAll('.package-card');  // Select all package cards
+
+    filterBtns.forEach(btn => {  // Loop over each button
+        btn.addEventListener('click', () => {  // Add click listener
+            filterBtns.forEach(b => b.classList.remove('active'));  // Remove active highlight from all buttons
+            btn.classList.add('active');  // Highlight clicked button
+
+            const filterValue = btn.textContent.trim().toLowerCase();  // Get category text in lowercase
+            pkgCards.forEach(card => {  // Filter cards
+                const category = (card.getAttribute('data-category') || '').toLowerCase();  // Read card category
+                card.style.display = (filterValue === 'all' || category.includes(filterValue)) ? 'flex' : 'none';  // Show/hide card
+            });
+        });
+    });
+</script>
+{# Closes content block #}
+{% endblock %}

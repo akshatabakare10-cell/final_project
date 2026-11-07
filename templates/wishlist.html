@@ -1,0 +1,82 @@
+{# Inherits base customer layout with top navigation bar and footer #}
+{% extends "user_base.html" %}
+{# Highlights wishlist link in navigation bar #}
+{% set active_page = 'wishlist' %}
+{# Sets browser title to 'My Wishlist' #}
+{% set page_title = 'My Wishlist' %}
+
+{# Injects wishlist content into the template content block #}
+{% block content %}
+<!-- Page wrapper container -->
+<div class="container">
+    <!-- Header title section -->
+    <div class="page-header">
+        <!-- Page title heading -->
+        <h1 class="text-primary">My Wishlist</h1>
+        <!-- Subtitle description -->
+        <p>Packages you have saved for later.</p>
+    </div>
+
+    {# Check if user has saved any wishlist packages #}
+    {% if packages %}
+        <!-- Grid layout displaying wishlist package cards -->
+        <div class="packages-grid">
+            {# Loop through each saved package #}
+            {% for item in packages %}
+            <!-- Individual package card container -->
+            <div class="package-card">
+                <!-- Card content wrapper -->
+                <div class="card-content">
+                    <div style="margin-bottom: 1rem;">
+                        <!-- Category badge (Standard, Luxury, etc.) -->
+                        <span class="badge badge-approved">{{ item.category if item.category else 'Standard' }}</span>
+                        <!-- Title name of the package -->
+                        <h3 class="card-title">{{ item.package_name }}</h3>
+                        <!-- Destination name with map pin icon -->
+                        <div class="card-location">
+                            <i class="fa-solid fa-location-dot"></i> {{ item.destination_name }}
+                        </div>
+                    </div>
+                    <!-- Metadata row showing duration and travelers limit -->
+                    <div class="card-meta">
+                        <span><i class="fas fa-clock"></i> {{ item.duration }} Days</span>
+                        <span><i class="fas fa-users"></i> Max {{ item.travelers_limit }}</span>
+                    </div>
+                    <!-- Formatted price display -->
+                    <div class="card-price">
+                        {{ item.price|money }} <small>/person</small>
+                    </div>
+                    <!-- Actions row with View Details and Remove buttons -->
+                    <div class="card-actions">
+                        <!-- Button to navigate to package details page -->
+                        <a href="{{ url_for('package_details', package_id=item.package_id) }}" class="btn-secondary btn-sm">View Details</a>
+                        <!-- Form to toggle/remove package from wishlist -->
+                        <form action="{{ url_for('toggle_wishlist', package_id=item.package_id) }}" method="POST">
+                            <!-- CSRF protection token -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <!-- Remove button with trash icon -->
+                            <button type="submit" class="btn-danger btn-sm w-100" title="Remove">
+                                <i class="fa-solid fa-trash"></i> Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty state displayed when customer has no favorited trips -->
+        <div class="card text-center" style="padding: 3rem;">
+            <!-- Heart icon indicating empty favorites -->
+            <i class="fa-regular fa-heart" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <!-- Empty state heading -->
+            <h3 style="margin: 0;">Your wishlist is empty</h3>
+            <!-- Suggestion prompt -->
+            <p class="text-secondary" style="margin-bottom: 1.5rem;">Explore our packages and save your favorites here.</p>
+            <!-- Call to action button taking user to packages catalog -->
+            <a href="{{ url_for('booking') }}" class="btn-primary">Explore Packages</a>
+        </div>
+    {% endif %}
+</div>
+{# Closes content block #}
+{% endblock %}

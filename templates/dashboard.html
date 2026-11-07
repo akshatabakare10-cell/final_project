@@ -1,0 +1,93 @@
+{# Inherits user_base.html layout #}
+{% extends "user_base.html" %}
+{# Highlights dashboard in navigation #}
+{% set active_page = 'dashboard' %}
+{# Sets browser title to My Dashboard #}
+{% set page_title = 'My Dashboard' %}
+
+{# Injects user dashboard into content block #}
+{% block content %}
+<!-- Page wrapper container -->
+<div class="container">
+    <!-- Header title section -->
+    <div class="page-header">
+        <!-- Main title -->
+        <h1 class="text-primary">User Dashboard</h1>
+        <!-- Personalized customer greeting -->
+        <p>Welcome back, {{ user.full_name }}!</p>
+    </div>
+
+    <!-- Quick statistics summary cards row -->
+    <div class="stat-row">
+        <!-- Bookings metric card -->
+        <div class="stat-card text-center">
+            <h2 style="margin: 0; color: var(--primary);">{{ bookings|length }}</h2>
+            <a href="{{ url_for('user_dashboard') }}" class="text-muted" style="font-size: 0.875rem;">View all bookings &rarr;</a>
+        </div>
+        <!-- Wishlist items metric card -->
+        <div class="stat-card text-center">
+            <h2 style="margin: 0; color: var(--primary);">{{ wishlist|length }}</h2>
+            <a href="{{ url_for('wishlist') }}" class="text-muted" style="font-size: 0.875rem;">View wishlist &rarr;</a>
+        </div>
+        <!-- Cumulative spent metric card -->
+        <div class="stat-card text-center">
+            {% set total_spent = namespace(value=0) %}
+            {% for p in payments %}{% set total_spent.value = total_spent.value + p.amount %}{% endfor %}
+            <h2 style="margin: 0; color: var(--accent);">{{ total_spent.value|money }}</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Total spent</p>
+        </div>
+        <!-- Support tickets metric card -->
+        <div class="stat-card text-center">
+            <h2 style="margin: 0; color: var(--primary);">{{ reports|length }}</h2>
+            <a href="{{ url_for('report_issue') }}" class="text-muted" style="font-size: 0.875rem;">Support tickets &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Recent bookings table card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h3 style="margin: 0;">Recent Bookings</h3>
+            <a href="{{ url_for('user_dashboard') }}" class="text-primary">View all &rarr;</a>
+        </div>
+        <!-- Bookings table -->
+        <table>
+            <!-- Column titles -->
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Package</th>
+                    <th>Travel Date</th>
+                    <th>Travelers</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <!-- Booking data rows -->
+            <tbody>
+                {# Check if any bookings exist #}
+                {% if bookings %}
+                    {# Show the 5 most recent bookings #}
+                    {% for b in bookings[:5] %}
+                    <tr>
+                        <td>#{{ b.booking_id }}</td>
+                        <td>{{ b.package_name }}</td>
+                        <td>{{ b.travel_date }}</td>
+                        <td>{{ b.travelers }}</td>
+                        <td class="text-accent">{{ b.total_price|money }}</td>
+                        <!-- Dynamic status badge with color coding -->
+                        <td>
+                            {% set st = (b.status or 'Pending')|lower %}
+                            <span class="badge badge-{{ 'approved' if st in ['approved', 'confirmed', 'completed'] else ('pending' if st == 'pending' else 'cancelled') }}">{{ b.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Empty state -->
+                    <tr><td colspan="6" class="empty-state">No bookings found.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{# Closes content block #}
+{% endblock %}

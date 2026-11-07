@@ -1,0 +1,210 @@
+{# Inherits admin layout #}
+{% extends "admin_base.html" %}
+{# Highlights current entity in sidebar navigation #}
+{% set active_page = entity_type %}
+{# Sets browser title to the current form title #}
+{% set page_title = page_title %}
+
+{# Injects form interface into content block #}
+{% block content %}
+<!-- Back navigation and title banner -->
+<div style="margin-bottom: 2rem;">
+    <a href="{{ back_url }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+        <i class="fa-solid fa-arrow-left"></i> {{ back_label }}
+    </a>
+    <h1 style="margin: 0.5rem 0 0 0;">{{ page_title }}</h1>
+</div>
+
+<!-- Card container holding dynamic CRUD form -->
+<div class="card" style="max-width: 800px;">
+    <!-- Form supporting image file uploads -->
+    <form action="" method="POST" enctype="multipart/form-data">
+        <!-- CSRF token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {# 1. Package Form Fields #}
+        {% if entity_type == 'package' %}
+            <div class="grid-2">
+                <!-- Package name input -->
+                <div class="form-group">
+                    <label>Package Name</label>
+                    <input type="text" name="package_name" value="{{ package.package_name if package else '' }}" required>
+                </div>
+                <!-- Destination city input -->
+                <div class="form-group">
+                    <label>Destination Name</label>
+                    <input type="text" name="destination" value="{{ package.destination_name if package else '' }}" required>
+                </div>
+                <!-- Package price input -->
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" step="0.01" name="price" value="{{ package.price if package else '' }}" required>
+                </div>
+                <!-- Duration in days input -->
+                <div class="form-group">
+                    <label>Duration (Days)</label>
+                    <input type="number" name="duration" value="{{ package.duration if package else '' }}" required>
+                </div>
+                <!-- Maximum travelers limit input -->
+                <div class="form-group">
+                    <label>Max Travelers</label>
+                    <input type="number" name="travelers_limit" value="{{ package.travelers_limit if package else '4' }}">
+                </div>
+                <!-- Start date picker input -->
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" value="{{ package.start_date if package else '' }}">
+                </div>
+                <!-- Package image file upload -->
+                <div class="form-group">
+                    <label>Package Image</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+            </div>
+            <!-- Package description textarea -->
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" required>{{ package.description if package else '' }}</textarea>
+            </div>
+
+            <!-- Optional Linked Hotel Addon Fields -->
+            <h3 style="margin: 1.5rem 0 1rem 0; font-size: 1.1rem; font-weight: 600;">Linked Hotel (Optional)</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Hotel Name</label>
+                    <input type="text" name="package_hotel_name" value="{{ package_hotel.hotel_name if package_hotel else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Room Type</label>
+                    <input type="text" name="package_room_type" value="{{ package_hotel.room_type if package_hotel else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Price Per Night</label>
+                    <input type="number" step="0.01" name="package_price_per_night" value="{{ package_hotel.price_per_night if package_hotel else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Rating (1-5)</label>
+                    <input type="number" step="0.1" min="1" max="5" name="package_rating" value="{{ package_hotel.rating if package_hotel else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Availability (Rooms)</label>
+                    <input type="number" name="package_availability" value="{{ package_hotel.availability if package_hotel else '' }}">
+                </div>
+            </div>
+
+            <!-- Optional Linked Transport Addon Fields -->
+            <h3 style="margin: 1.5rem 0 1rem 0; font-size: 1.1rem; font-weight: 600;">Linked Transport (Optional)</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Mode</label>
+                    <select name="package_transport_mode">
+                        <option value="">-- None --</option>
+                        <option value="Flight" {% if package_transport and package_transport.mode == 'Flight' %}selected{% endif %}>Flight</option>
+                        <option value="Train" {% if package_transport and package_transport.mode == 'Train' %}selected{% endif %}>Train</option>
+                        <option value="Bus" {% if package_transport and package_transport.mode == 'Bus' %}selected{% endif %}>Bus</option>
+                        <option value="Car" {% if package_transport and package_transport.mode == 'Car' %}selected{% endif %}>Car</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Transport Type</label>
+                    <input type="text" name="package_transport_type" value="{{ package_transport.transport_type if package_transport else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Name / Carrier</label>
+                    <input type="text" name="package_vehicle_name" value="{{ package_transport.vehicle_name if package_transport else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Source Name</label>
+                    <input type="text" name="package_source_name" value="{{ package_transport.source_name if package_transport else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Airport/Station Name</label>
+                    <input type="text" name="package_airport_name" value="{{ package_transport.airport_name if package_transport else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" step="0.01" name="package_transport_price" value="{{ package_transport.price if package_transport else '' }}">
+                </div>
+            </div>
+
+        {# 2. Hotel Form Fields #}
+        {% elif entity_type == 'hotel' %}
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Hotel Name</label>
+                    <input type="text" name="hotel_name" value="{{ hotel.hotel_name if hotel else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Destination</label>
+                    <input type="text" name="destination" value="{{ hotel.destination_name if hotel else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Room Type</label>
+                    <input type="text" name="room_type" value="{{ hotel.room_type if hotel else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Price Per Night</label>
+                    <input type="number" step="0.01" name="price_per_night" value="{{ hotel.price_per_night if hotel else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Rating (1-5)</label>
+                    <input type="number" step="0.1" min="1" max="5" name="rating" value="{{ hotel.rating if hotel else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Availability (Rooms)</label>
+                    <input type="number" name="availability" value="{{ hotel.availability if hotel else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Hotel Image</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+            </div>
+
+        {# 3. Transport Form Fields #}
+        {% elif entity_type == 'transport' %}
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Mode</label>
+                    <select name="mode" required>
+                        <option value="Flight" {% if transport_item and transport_item.mode == 'Flight' %}selected{% endif %}>Flight</option>
+                        <option value="Train" {% if transport_item and transport_item.mode == 'Train' %}selected{% endif %}>Train</option>
+                        <option value="Bus" {% if transport_item and transport_item.mode == 'Bus' %}selected{% endif %}>Bus</option>
+                        <option value="Car" {% if transport_item and transport_item.mode == 'Car' %}selected{% endif %}>Car</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Transport Type</label>
+                    <input type="text" name="type" value="{{ transport_item.transport_type if transport_item else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Name / Carrier</label>
+                    <input type="text" name="vehicle" value="{{ transport_item.vehicle_name if transport_item else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" step="0.01" name="price" value="{{ transport_item.price if transport_item else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Source Name (From)</label>
+                    <input type="text" name="source" value="{{ transport_item.source_name if transport_item else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Destination Name (To)</label>
+                    <input type="text" name="destination" value="{{ transport_item.destination_name if transport_item else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Airport/Station Name (If applicable)</label>
+                    <input type="text" name="airport" value="{{ transport_item.airport_name if transport_item else '' }}">
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Form action buttons -->
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn-primary">Save Changes</button>
+            <a href="{{ back_url }}" class="btn-ghost" style="text-decoration: none; display: flex; align-items: center;">Cancel</a>
+        </div>
+    </form>
+</div>
+{# Closes content block #}
+{% endblock %}

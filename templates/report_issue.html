@@ -1,0 +1,112 @@
+{# Inherits base layout from user_base.html #}
+{% extends "user_base.html" %}
+{# Sets active navigation link to support #}
+{% set active_page = 'support' %}
+{# Sets browser title to Report an Issue #}
+{% set page_title = 'Report an Issue' %}
+
+{# Injects support center view into content block #}
+{% block content %}
+<!-- Main page container -->
+<div class="container">
+    <!-- Header title section -->
+    <div class="page-header">
+        <!-- Main title -->
+        <h1 class="text-primary">Support Center</h1>
+        <!-- Subtitle description -->
+        <p>How can we help you today?</p>
+    </div>
+
+    <!-- Card container for issue submission form -->
+    <div class="card">
+        <!-- Form heading -->
+        <h2 style="margin-top: 0; margin-bottom: 1.5rem;">Report an Issue</h2>
+        <!-- Form posting ticket to report_issue route -->
+        <form action="{{ url_for('report_issue') }}" method="POST">
+            <!-- CSRF protection token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- Two-column grid layout for service type and reference ID -->
+            <div class="grid-2">
+                <!-- Service category dropdown form group -->
+                <div class="form-group">
+                    <label>Service Type <span style="color: var(--danger);">*</span></label>
+                    <select name="service_type" required>
+                        <option value="" disabled selected>Select service</option>
+                        <option value="Package">Package</option>
+                        <option value="Hotel">Hotel</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Payment">Payment</option>
+                        <option value="General">General Inquiry</option>
+                    </select>
+                </div>
+                <!-- Optional booking/payment reference ID form group -->
+                <div class="form-group">
+                    <label>Reference ID (Optional)</label>
+                    <input type="text" name="reference_id" placeholder="e.g., Booking ID or Payment ID">
+                </div>
+            </div>
+            <!-- Subject input form group -->
+            <div class="form-group">
+                <label>Subject <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="subject" required placeholder="Brief description of the issue">
+            </div>
+            <!-- Detailed description textarea form group -->
+            <div class="form-group">
+                <label>Description <span style="color: var(--danger);">*</span></label>
+                <textarea name="message" rows="5" required placeholder="Please provide detailed information about your issue..."></textarea>
+            </div>
+            <!-- Form submit button -->
+            <button type="submit" class="btn-primary">Submit Report</button>
+        </form>
+    </div>
+
+    <!-- Card table container listing user's past support reports -->
+    <div class="table-card">
+        <!-- Table card header -->
+        <div class="table-card-header">
+            <h3 style="margin: 0;">Your Recent Reports</h3>
+        </div>
+        <!-- Support tickets table -->
+        <table>
+            <!-- Table columns header -->
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Subject</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <!-- Table body rows -->
+            <tbody>
+                {# Check if reports exist #}
+                {% if reports %}
+                    {# Loop through user's support reports #}
+                    {% for r in reports %}
+                    <tr>
+                        <!-- Report ticket ID -->
+                        <td>#{{ r.report_id }}</td>
+                        <!-- Service type -->
+                        <td>{{ r.service_type }}</td>
+                        <!-- Subject line -->
+                        <td>{{ r.subject }}</td>
+                        <!-- Date reported -->
+                        <td>{{ r.created_at }}</td>
+                        <!-- Ticket status badge -->
+                        <td>
+                            {% set st = (r.status or 'Open')|lower %}
+                            <span class="badge badge-{{ 'approved' if st == 'resolved' else ('pending' if st in ['pending', 'in progress'] else 'cancelled') }}">{{ r.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Empty state row -->
+                    <tr><td colspan="5" class="empty-state">You haven't submitted any reports yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{# Closes content block #}
+{% endblock %}

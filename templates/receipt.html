@@ -1,0 +1,104 @@
+{# Inherits user_base.html base template #}
+{% extends "user_base.html" %}
+{# Sets browser title to Payment Receipt #}
+{% set page_title = 'Payment Receipt' %}
+
+{# Injects receipt UI into content block #}
+{% block content %}
+<!-- Page wrapper container -->
+<div class="container">
+    <!-- Back button navigation (hidden when printing) -->
+    <div style="margin-bottom: 2rem;" class="no-print">
+        <a href="{{ url_for('payment_history') }}" style="color: var(--text-secondary);"><i class="fa-solid fa-arrow-left"></i> Back to History</a>
+    </div>
+
+    <!-- Official printed receipt card -->
+    <div class="card" style="max-width: 600px; margin: 0 auto; padding: 3rem; position: relative;">
+        <!-- Receipt header banner with logo and invoice metadata -->
+        <div class="flex-between" style="border-bottom: 1px solid var(--border); padding-bottom: 2rem; margin-bottom: 2rem;">
+            <div>
+                <!-- Company brand name -->
+                <h2 style="margin: 0;"><i class="fa-solid fa-globe"></i> Travel<span style="color: var(--primary);">World</span></h2>
+                <!-- Tagline -->
+                <p class="text-muted" style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">Your trusted travel partner</p>
+            </div>
+            <!-- Receipt number and date -->
+            <div style="text-align: right;">
+                <h1 style="margin: 0; font-size: 2rem; color: var(--text-secondary);">RECEIPT</h1>
+                <!-- Payment ID # -->
+                <p style="margin: 0.5rem 0 0 0;">#{{ receipt.payment_id|default('N/A') }}</p>
+                <!-- Transaction date -->
+                <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.875rem;">Date: {{ receipt.payment_date|default('N/A') }}</p>
+            </div>
+        </div>
+
+        <!-- Section detailing customer booking information -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Booking Details</h3>
+            <!-- Grid displaying package, destination, travel date, and travelers count -->
+            <div class="grid-2" style="gap: 1rem;">
+                <div>
+                    <p class="text-muted" style="margin: 0 0 0.25rem 0; font-size: 0.875rem;">Package</p>
+                    <p style="margin: 0; font-weight: 500;">{{ receipt.package_name|default('N/A') }}</p>
+                </div>
+                <div>
+                    <p class="text-muted" style="margin: 0 0 0.25rem 0; font-size: 0.875rem;">Destination</p>
+                    <p style="margin: 0; font-weight: 500;">{{ receipt.destination_name|default('N/A') }}</p>
+                </div>
+                <div>
+                    <p class="text-muted" style="margin: 0 0 0.25rem 0; font-size: 0.875rem;">Travel Date</p>
+                    <p style="margin: 0; font-weight: 500;">{{ receipt.travel_date|default('N/A') }}</p>
+                </div>
+                <div>
+                    <p class="text-muted" style="margin: 0 0 0.25rem 0; font-size: 0.875rem;">Travelers</p>
+                    <p style="margin: 0; font-weight: 500;">{{ receipt.travelers|default('N/A') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section detailing financial totals -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Payment Breakdown</h3>
+            <table>
+                <tbody>
+                    <tr>
+                        <td style="color: var(--text-secondary);">Total Amount</td>
+                        <!-- Displays formatted grand total paid -->
+                        <td style="text-align: right; font-weight: 700; font-size: 1.5rem; color: var(--accent);">{{ receipt.total_price|money }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer strip with payment method and verified status badge -->
+        <div class="flex-between" style="background: var(--surface-hover); padding: 1rem; border-radius: 0.5rem;">
+            <div>
+                <p class="text-muted" style="margin: 0 0 0.25rem 0; font-size: 0.875rem;">Payment Method</p>
+                <p style="margin: 0; font-weight: 500;">{{ receipt.payment_method|default('N/A') }}</p>
+            </div>
+            <div style="text-align: right;">
+                <p class="text-muted" style="margin: 0 0 0.25rem 0; font-size: 0.875rem;">Status</p>
+                <span class="badge badge-approved" style="font-weight: 600;">{{ receipt.status|default('Paid') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print receipt button invoking browser print dialog -->
+    <div style="text-align: center; margin-top: 2rem;" class="no-print">
+        <button onclick="window.print()" class="btn-primary">
+            <i class="fa-solid fa-print"></i> Print Receipt
+        </button>
+    </div>
+
+    <!-- Media print CSS hiding web navigation and optimizing layout for paper printing -->
+    <style>
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print, .navbar, .footer { display: none !important; }
+            .card { box-shadow: none !important; border: 1px solid #ccc !important; padding: 2rem !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
+            :root { --bg: white; --surface: white; --surface-hover: #f9f9f9; --text: black; --text-secondary: #333; --text-muted: #666; --border: #eee; --primary: #000; --accent: #000; }
+        }
+    </style>
+</div>
+{# Closes content block #}
+{% endblock %}

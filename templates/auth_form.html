@@ -1,0 +1,160 @@
+<!-- Standard HTML5 document declaration -->
+<!DOCTYPE html>
+<!-- HTML root element configured for English language -->
+<html lang="en">
+<!-- Head element containing metadata, fonts, stylesheets, and titles -->
+<head>
+    <!-- Character set UTF-8 -->
+    <meta charset="UTF-8">
+    <!-- Viewport configuration for mobile responsiveness -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dynamic page title -->
+    <title>{{ page_title|default('TravelWorld') }} - TravelWorld</title>
+    <!-- Google Fonts Poppins stylesheet -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icon CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main project CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<!-- Body element styled with centered auth layout -->
+<body class="auth-body">
+    <!-- Card wrapper for authentication forms -->
+    <div class="auth-card">
+        <!-- Logo and brand link -->
+        <div class="auth-logo">
+            <!-- Globe icon -->
+            <i class="fa-solid fa-earth-americas"></i>
+            <!-- Brand link to homepage -->
+            <a href="{{ url_for('home') }}">Travel<span>World</span></a>
+        </div>
+
+        {# Display flashed notification alerts from Flask session #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {# Display direct error, notice, or demo password reset link if provided #}
+        {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+        {% if notice %}<div class="alert alert-info">{{ notice }}</div>{% endif %}
+        {% if reset_link %}
+            <div class="alert alert-success" style="word-break: break-all;">
+                Demo link: <a href="{{ reset_link }}" style="color: var(--primary); font-weight: 700; text-decoration: underline;">Open the reset page</a>
+            </div>
+        {% endif %}
+
+        {# Determine active view mode (login, register, forgot_password, new_password) #}
+        {% set current_mode = auth_mode or mode or 'login' %}
+
+        {# 1. Login Mode View #}
+        {% if current_mode == 'login' %}
+            <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; text-align: center;">Welcome Back</h2>
+            <!-- Login form posting credentials to login route -->
+            <form action="{{ url_for('login') }}" method="POST">
+                <!-- CSRF protection token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- Email field -->
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="akshata@gmail.com" required>
+                </div>
+                <!-- Password field -->
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <!-- Remember me and forgot password links -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 1rem;">
+                    <label style="color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                        <input type="checkbox" name="remember"> Remember me
+                    </label>
+                    <a href="{{ url_for('forgot_password') }}" style="color: var(--primary); text-decoration: none;">Forgot password?</a>
+                </div>
+                <!-- Login submission button -->
+                <button type="submit" class="btn-primary w-100">Sign In</button>
+            </form>
+            <!-- Navigation link to registration page -->
+            <div class="auth-links">
+                Don't have an account? <a href="{{ url_for('register') }}">Register</a>
+            </div>
+
+        {# 2. Registration Mode View #}
+        {% elif current_mode == 'register' %}
+            <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; text-align: center;">Create an Account</h2>
+            <!-- Registration form posting user details to register route -->
+            <form action="{{ url_for('register') }}" method="POST">
+                <!-- CSRF token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- Full name field -->
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="Akshata Bakare" required>
+                </div>
+                <!-- Email field -->
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="akshata@gmail.com" required>
+                </div>
+                <!-- Phone number field -->
+                <div class="form-group">
+                    <label>Phone Number (10 digits)</label>
+                    <input type="tel" name="phone" placeholder="9876543210" required>
+                </div>
+                <!-- Password field -->
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="At least 8 chars (A-Z, a-z, 0-9, @#$)" required>
+                </div>
+                <!-- Registration submission button -->
+                <button type="submit" class="btn-primary w-100">Create Account</button>
+            </form>
+            <!-- Navigation link to login page -->
+            <div class="auth-links">
+                Already have an account? <a href="{{ url_for('login') }}">Login</a>
+            </div>
+
+        {# 3. Forgot Password Mode View #}
+        {% elif current_mode in ['forgot', 'forgot_password'] %}
+            <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.75rem; text-align: center;">Reset Password</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Enter your email to receive a password reset link.</p>
+            <!-- Form requesting reset link -->
+            <form action="{{ url_for('forgot_password') }}" method="POST">
+                <!-- CSRF token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- Email input -->
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="akshata@gmail.com" required>
+                </div>
+                <!-- Reset link request button -->
+                <button type="submit" class="btn-primary w-100">Send Reset Link</button>
+            </form>
+            <!-- Back to login link -->
+            <div class="auth-links">
+                <a href="{{ url_for('login') }}">Back to Login</a>
+            </div>
+
+        {# 4. Set New Password Mode View #}
+        {% elif current_mode in ['reset', 'new_password'] %}
+            <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.75rem; text-align: center;">Set New Password</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Create a new secure password for {{ email }}.</p>
+            <!-- Form saving new password -->
+            <form action="{{ url_for('reset_password', token=token) }}" method="POST">
+                <!-- CSRF token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- New password field -->
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="password" placeholder="New Password (8+ chars)" required>
+                </div>
+                <!-- Submit button -->
+                <button type="submit" class="btn-primary w-100">Save New Password</button>
+            </form>
+        {% endif %}
+    </div>
+</body>
+</html>

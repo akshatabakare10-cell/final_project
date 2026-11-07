@@ -1,0 +1,107 @@
+<!-- Standard HTML5 document declaration -->
+<!DOCTYPE html>
+<!-- HTML root element configured for English -->
+<html lang="en">
+<!-- Head element for administrative layout metadata and assets -->
+<head>
+    <!-- Character set UTF-8 -->
+    <meta charset="UTF-8">
+    <!-- Viewport configuration for mobile and desktop screens -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dynamic page title with fallback to Admin Dashboard -->
+    <title>{{ page_title if page_title else 'Admin Dashboard' }} - TravelWorld</title>
+    <!-- Imports Poppins font weights 300 to 800 -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Imports FontAwesome icon library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Links the custom project stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<!-- Body element styled with admin dashboard layout -->
+<body class="admin-body">
+    <!-- Left vertical administrative sidebar -->
+    <aside class="sidebar">
+        <!-- Sidebar logo and branding block -->
+        <div class="sidebar-brand">
+            <!-- Brand link redirecting to admin dashboard -->
+            <a href="{{ url_for('admin_dashboard') }}" class="logo-container">
+                <!-- Globe icon -->
+                <i class="fa-solid fa-globe logo-icon"></i>
+                <!-- Brand text -->
+                <span>
+                    <span class="logo-text-travel">Travel</span><span class="logo-text-world">World</span>
+                </span>
+            </a>
+            <!-- Tagline -->
+            <span class="brand-subtitle">Tourism Management System</span>
+        </div>
+
+        <!-- Sidebar navigation menu list -->
+        <nav class="sidebar-nav">
+            <!-- Dashboard overview navigation link -->
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link {{ 'active' if active_page == 'dashboard' else '' }}">
+                <i class="fa-solid fa-chart-line"></i> <span>Dashboard</span>
+            </a>
+            <!-- Registered users management navigation link -->
+            <a href="{{ url_for('manage_users') }}" class="nav-link {{ 'active' if active_page == 'users' else '' }}">
+                <i class="fa-solid fa-users"></i> <span>Users</span>
+            </a>
+            <!-- Tour packages management navigation link -->
+            <a href="{{ url_for('manage_packages') }}" class="nav-link {{ 'active' if active_page == 'packages' else '' }}">
+                <i class="fa-solid fa-suitcase"></i> <span>Packages</span>
+            </a>
+            <!-- Customer bookings management navigation link -->
+            <a href="{{ url_for('manage_bookings') }}" class="nav-link {{ 'active' if active_page == 'bookings' else '' }}">
+                <i class="fa-solid fa-ticket-alt"></i> <span>Bookings</span>
+            </a>
+            <!-- Support reports and complaints navigation link -->
+            <a href="{{ url_for('manage_user_reports') }}" class="nav-link {{ 'active' if active_page in ['reports', 'user_reports'] else '' }}">
+                <i class="fa-solid fa-chart-bar"></i> <span>Reports</span>
+            </a>
+        </nav>
+
+        <!-- Bottom sidebar logout link -->
+        <div class="sidebar-bottom">
+            <!-- Logout link with danger styling -->
+            <a href="{{ url_for('logout') }}" class="nav-link nav-link-danger">
+                <i class="fa-solid fa-sign-out-alt"></i> <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main administrative content area -->
+    <main class="main-content">
+        <!-- Top header bar for title and administrator profile -->
+        <header class="topbar">
+            <!-- Page heading -->
+            <div class="topbar-title">{{ page_title if page_title else 'Admin Dashboard' }}</div>
+            <!-- Logged-in admin user badge -->
+            <div class="topbar-user">
+                <!-- Admin full name -->
+                <span class="admin-name">{{ admin_name if admin_name else (session.get('admin_username', 'Admin') | title) }}</span>
+                <!-- Admin initial avatar circle -->
+                <div class="avatar-circle">{{ (admin_name if admin_name else session.get('admin_username', 'A'))[0] | upper }}</div>
+            </div>
+        </header>
+
+        <!-- Content wrapper for flash alerts and injected page bodies -->
+        <div class="content-wrapper">
+            {# Flash alerts container #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {# Check if flash messages exist #}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {# Loop through each message #}
+                        {% for category, message in messages %}
+                            <!-- Render message alert box -->
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {# Child page content block #}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

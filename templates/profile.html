@@ -1,0 +1,99 @@
+{# Inherits layout from user_base.html #}
+{% extends "user_base.html" %}
+{# Highlights profile in navigation #}
+{% set active_page = 'profile' %}
+{# Sets browser window title to My Profile #}
+{% set page_title = 'My Profile' %}
+
+{# Injects profile management interface into content block #}
+{% block content %}
+<!-- Page wrapper container -->
+<div class="container">
+    <!-- Header title section -->
+    <div class="page-header">
+        <!-- Main title -->
+        <h1 class="text-primary">My Profile</h1>
+        <!-- Subtitle description -->
+        <p>Manage your personal information and account settings.</p>
+    </div>
+
+    <!-- Responsive 2-column layout: left column for avatar badge, right column for edit forms -->
+    <div class="grid-2" style="grid-template-columns: 1fr 2fr;">
+        <!-- Left column: User avatar card -->
+        <div class="card text-center" style="align-self: start;">
+            <!-- Circular avatar container -->
+            <div style="width: 120px; height: 120px; background: var(--primary-soft); border: 2px solid var(--primary); border-radius: 50%; margin: 0 auto 1.5rem auto; display: flex; justify-content: center; align-items: center; overflow: hidden;">
+                {# Render custom avatar photo if uploaded, otherwise show first letter of name #}
+                {% if user.avatar_filename %}
+                    <img src="{{ url_for('static', filename='image/' + user.avatar_filename) }}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    <span style="font-size: 3rem; color: var(--primary); font-weight: 600;">{{ user.full_name[0]|upper }}</span>
+                {% endif %}
+            </div>
+            <!-- User full name -->
+            <h2 style="margin: 0;">{{ user.full_name }}</h2>
+            <!-- User email address -->
+            <p class="text-muted" style="margin-top: 0.25rem;">{{ user.email }}</p>
+        </div>
+
+        <!-- Right column: Edit forms container -->
+        <div style="display: grid; gap: 2rem;">
+            <!-- Personal information card -->
+            <div class="card">
+                <h3 style="margin-top: 0; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">Personal Information</h3>
+                <!-- Form supporting multipart image file uploads -->
+                <form action="{{ url_for('profile') }}" method="POST" enctype="multipart/form-data">
+                    <!-- CSRF security token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="grid-2">
+                        <!-- Full name input field -->
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" name="full_name" value="{{ user.full_name }}" required>
+                        </div>
+                        <!-- Readonly email address field -->
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" value="{{ user.email }}" readonly style="background: var(--bg); color: var(--text-muted); cursor: not-allowed;">
+                        </div>
+                        <!-- Phone number input field -->
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" name="phone" value="{{ user.phone|default('') }}">
+                        </div>
+                        <!-- Profile photo file uploader -->
+                        <div class="form-group">
+                            <label>Profile Photo</label>
+                            <input type="file" name="avatar" accept="image/*">
+                        </div>
+                    </div>
+                    <!-- Save changes button -->
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Change password card -->
+            <div class="card">
+                <h3 style="margin-top: 0; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">Change Password</h3>
+                <!-- Password change form -->
+                <form action="{{ url_for('profile') }}" method="POST">
+                    <!-- CSRF security token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- New password input field -->
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" name="new_password" placeholder="Leave blank to keep current password">
+                    </div>
+                    <!-- Update password submit button -->
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{# Closes content block #}
+{% endblock %}

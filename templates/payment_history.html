@@ -1,0 +1,102 @@
+{# Inherit header, navbar, and footer layout from user_base.html #}
+{% extends "user_base.html" %}
+{# Mark payment_history active in navigation bar #}
+{% set active_page = 'payment_history' %}
+{# Set browser title to 'Payment History' #}
+{% set page_title = 'Payment History' %}
+
+{# Injects payment history UI into content block #}
+{% block content %}
+<!-- Main page container for layout alignment -->
+<div class="container">
+    <!-- Header title section -->
+    <div class="page-header">
+        <!-- Page title heading -->
+        <h1 class="text-primary">Payment History</h1>
+        <!-- Subtitle description -->
+        <p>View and manage your past transactions.</p>
+    </div>
+
+    <!-- Row of transaction statistic cards -->
+    <div class="stat-row">
+        <!-- Total paid card -->
+        <div class="stat-card text-center">
+            <p class="text-muted" style="margin: 0 0 0.5rem 0; font-size: 0.875rem;">Total Paid</p>
+            {# Namespace variable to compute cumulative paid sum #}
+            {% set total = namespace(value=0) %}
+            {# Sum amounts for all successful payments #}
+            {% for p in payments %}{% if p.status == 'Paid' %}{% set total.value = total.value + p.amount %}{% endif %}{% endfor %}
+            <!-- Displays formatted total amount paid using custom money filter -->
+            <h2 style="margin: 0; color: var(--primary);">{{ total.value|money }}</h2>
+        </div>
+        <!-- Total transactions card -->
+        <div class="stat-card text-center">
+            <p class="text-muted" style="margin: 0 0 0.5rem 0; font-size: 0.875rem;">Total Payments</p>
+            <!-- Displays count of payments -->
+            <h2 style="margin: 0; color: var(--primary);">{{ payments|length }}</h2>
+        </div>
+        <!-- Total pending transactions card -->
+        <div class="stat-card text-center">
+            <p class="text-muted" style="margin: 0 0 0.5rem 0; font-size: 0.875rem;">Pending Payments</p>
+            {# Namespace variable to compute pending count #}
+            {% set pending = namespace(count=0) %}
+            {# Count payments with pending status #}
+            {% for p in payments %}{% if p.status == 'Pending' %}{% set pending.count = pending.count + 1 %}{% endif %}{% endfor %}
+            <!-- Displays pending count -->
+            <h2 style="margin: 0; color: var(--accent);">{{ pending.count }}</h2>
+        </div>
+    </div>
+
+    <!-- Card containing the payments data table -->
+    <div class="table-card">
+        <!-- Transactions table -->
+        <table>
+            <!-- Table header row -->
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <!-- Table body rows -->
+            <tbody>
+                {# Check if payment records exist #}
+                {% if payments %}
+                    {# Loop through each payment record #}
+                    {% for p in payments %}
+                    <tr>
+                        <!-- Payment invoice ID -->
+                        <td>#{{ p.payment_id }}</td>
+                        <!-- Payment method used (Card, UPI, Bank) -->
+                        <td>{{ p.payment_method }}</td>
+                        <!-- Payment date and time -->
+                        <td>{{ p.payment_date }}</td>
+                        <!-- Formatted payment amount -->
+                        <td class="text-accent" style="font-weight: 500;">{{ p.amount|money }}</td>
+                        <!-- Payment status badge with color coding -->
+                        <td>
+                            {% set st = (p.status or 'Pending')|lower %}
+                            <span class="badge badge-{{ 'approved' if st in ['paid', 'completed'] else ('pending' if st == 'pending' else 'cancelled') }}">{{ p.status }}</span>
+                        </td>
+                        <!-- Action link to view/download invoice receipt -->
+                        <td>
+                            <a href="{{ url_for('payment_receipt', payment_id=p.payment_id) }}" class="btn-secondary btn-sm">
+                                <i class="fa-solid fa-download"></i> Receipt
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Display empty state when no payments have occurred yet -->
+                    <tr><td colspan="6" class="empty-state">No payment history found.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{# Closes content block #}
+{% endblock %}

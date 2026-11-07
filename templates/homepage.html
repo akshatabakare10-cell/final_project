@@ -1,0 +1,183 @@
+{# Inherits standard customer header and footer from user_base.html #}
+{% extends "user_base.html" %}
+{# Highlights 'Home' in navigation menu #}
+{% set active_page = 'home' %}
+{# Sets webpage browser tab title #}
+{% set page_title = 'Discover The World' %}
+
+{# Injects homepage layout into content block #}
+{% block content %}
+<!-- Hero banner section welcoming visitors -->
+<section class="hero">
+    <!-- Dark transparent overlay for image contrast -->
+    <div class="hero-overlay"></div>
+    <!-- Central text content in hero banner -->
+    <div class="hero-content">
+        <!-- Pill badge accent above hero title -->
+        <span class="hero-badge">✦ DISCOVER THE WORLD</span>
+        <!-- Main marketing heading with highlight color -->
+        <h1 class="hero-title">Explore The World <span class="highlight">With Us</span></h1>
+        <!-- Value proposition subtitle -->
+        <p class="hero-subtitle">Discover amazing places at exclusive deals and create unforgettable memories.</p>
+        <!-- Primary call to action button linking to packages -->
+        <a href="{{ url_for('booking') }}" class="btn-primary">Explore Packages &rarr;</a>
+    </div>
+</section>
+
+<!-- Filter search bar section -->
+<div class="search-section">
+    <!-- Floating search card container -->
+    <div class="search-card">
+        <!-- Search form submitting GET request to search_packages route -->
+        <form action="{{ url_for('search_packages') }}" method="GET" class="search-form">
+            <!-- Destination input group -->
+            <div class="form-group">
+                <label for="destination">Destination</label>
+                <input type="text" id="destination" name="destination" placeholder="Where to?">
+            </div>
+            <!-- Travel date selector input group -->
+            <div class="form-group">
+                <label for="travel_date">Travel Date</label>
+                <input type="date" id="travel_date" name="travel_date">
+            </div>
+            <!-- Travelers count input group -->
+            <div class="form-group">
+                <label for="travelers">Travelers</label>
+                <input type="number" id="travelers" name="travelers" min="1" placeholder="How many?">
+            </div>
+            <!-- Budget limit input group -->
+            <div class="form-group">
+                <label for="budget">Budget</label>
+                <input type="number" id="budget" name="budget" placeholder="Max price">
+            </div>
+            <!-- Search submit button -->
+            <div class="form-group" style="flex: 0.5;">
+                <button type="submit" class="search-btn">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Trust and value proposition feature strip -->
+<div class="feature-strip">
+    <div class="feature-item">
+        <i class="fas fa-shield-alt"></i>
+        <h4>Best Price Guaranteed</h4>
+    </div>
+    <div class="feature-item">
+        <i class="fas fa-bolt"></i>
+        <h4>Easy Booking</h4>
+    </div>
+    <div class="feature-item">
+        <i class="fas fa-headset"></i>
+        <h4>24/7 Support</h4>
+    </div>
+    <div class="feature-item">
+        <i class="fas fa-users"></i>
+        <h4>Trusted By Thousands</h4>
+    </div>
+</div>
+
+<!-- Available packages showcase section -->
+<section class="section">
+    <div class="section-header">
+        <h2 class="section-title">Available <span>Packages</span></h2>
+    </div>
+
+    <!-- Category filter pills -->
+    <div class="filters">
+        <span class="filter-pill active">All</span>
+        <span class="filter-pill">Honeymoon</span>
+        <span class="filter-pill">Family</span>
+        <span class="filter-pill">Adventure</span>
+        <span class="filter-pill">Beach</span>
+        <span class="filter-pill">Hill Station</span>
+    </div>
+
+    <!-- Package cards grid -->
+    <div class="packages-grid">
+        {# Loop through packages passed from Flask public.home route #}
+        {% for package in packages %}
+        <div class="package-card">
+            <div class="card-content">
+                <div style="margin-bottom: 1rem;">
+                    <!-- Category badge -->
+                    <span class="badge badge-approved">{{ package.category if package.category else 'Standard' }}</span>
+                    <!-- Package title -->
+                    <h3 class="card-title">{{ package.package_name }}</h3>
+                    <!-- Destination marker -->
+                    <div class="card-location">
+                        <i class="fas fa-map-marker-alt"></i> {{ package.destination_name }}
+                    </div>
+                </div>
+                <!-- Duration and traveler limits -->
+                <div class="card-meta">
+                    <span><i class="fas fa-clock"></i> {{ package.duration }} Days</span>
+                    <span><i class="fas fa-users"></i> Max {{ package.travelers_limit }}</span>
+                </div>
+                <!-- Formatted price -->
+                <div class="card-price">
+                    {{ package.price|money }} <small>/person</small>
+                </div>
+                <!-- Action buttons: both lead to detail page so user picks date & travelers before booking -->
+                <div class="card-actions">
+                    <a href="{{ url_for('package_details', package_id=package.package_id) }}" class="btn-secondary btn-sm">Details</a>
+                    <!-- Select links to detail page where Book Now form collects travel date and travelers -->
+                    <a href="{{ url_for('package_details', package_id=package.package_id) }}" class="btn-primary btn-sm">Select</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Why Choose Us company strengths section -->
+<section class="section" style="background: var(--surface);">
+    <div class="section-header">
+        <h2 class="section-title">Why Choose <span>Us</span></h2>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <i class="fas fa-tag" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+            <h3>Best Deals</h3>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-map" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+            <h3>Curated Packages</h3>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-headset" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+            <h3>Expert Support</h3>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-shield-alt" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+            <h3>Safe Travel</h3>
+        </div>
+    </div>
+</section>
+
+<!-- Customer testimonials section -->
+<section class="section">
+    <div class="section-header">
+        <h2 class="section-title">Traveler <span>Testimonials</span></h2>
+    </div>
+    <div class="features-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="feature-card">
+            <i class="fas fa-quote-left" style="color:var(--primary); font-size:1.5rem; margin-bottom:1rem;"></i>
+            <p style="color:var(--text-secondary); margin-bottom:1rem;">"Amazing experience! Everything was perfectly planned."</p>
+            <h4>- John Doe</h4>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-quote-left" style="color:var(--primary); font-size:1.5rem; margin-bottom:1rem;"></i>
+            <p style="color:var(--text-secondary); margin-bottom:1rem;">"Great customer service and fantastic hotels."</p>
+            <h4>- Jane Smith</h4>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-quote-left" style="color:var(--primary); font-size:1.5rem; margin-bottom:1rem;"></i>
+            <p style="color:var(--text-secondary); margin-bottom:1rem;">"Will definitely book with TravelWorld again!"</p>
+            <h4>- Mark Wilson</h4>
+        </div>
+    </div>
+</section>
+{# Closes content block #}
+{% endblock %}

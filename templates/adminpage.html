@@ -1,0 +1,198 @@
+{# Inherits admin_base.html layout with sidebar and topbar #}
+{% extends "admin_base.html" %}
+{# Sets active navigation link to dashboard #}
+{% set active_page = 'dashboard' %}
+{# Sets browser title to Admin Dashboard #}
+{% set page_title = 'Admin Dashboard' %}
+
+{# Injects administrative dashboard into content block #}
+{% block content %}
+<!-- Top metrics row displaying total users, bookings, packages, and total revenue -->
+<div class="stat-row">
+    <!-- Total users metric card -->
+    <div class="stat-card">
+        <h3>Total Users</h3>
+        <div class="value">{{ stats.total_users }}</div>
+    </div>
+    <!-- Total bookings metric card -->
+    <div class="stat-card">
+        <h3>Total Bookings</h3>
+        <div class="value">{{ stats.total_bookings }}</div>
+    </div>
+    <!-- Total tour packages metric card -->
+    <div class="stat-card">
+        <h3>Total Packages</h3>
+        <div class="value">{{ stats.total_packages }}</div>
+    </div>
+    <!-- Total platform revenue metric card -->
+    <div class="stat-card">
+        <h3>Total Revenue</h3>
+        <div class="value" style="color: var(--accent);">{{ stats.total_revenue|money }}</div>
+    </div>
+</div>
+
+<!-- Revenue chart visualization card -->
+<div class="card">
+    <div class="table-card-header">
+        <h2>Revenue Overview</h2>
+    </div>
+    {# Render Chart.js canvas if revenue history is available #}
+    {% if chart_labels and chart_values %}
+        <div style="height: 300px; width: 100%;">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    {% else %}
+        <div class="empty-state">No revenue data available for the chart.</div>
+    {% endif %}
+</div>
+
+<!-- Recent customer bookings table card -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h2>Recent Bookings</h2>
+        <a href="{{ url_for('manage_bookings') }}" class="btn-ghost btn-sm">View All</a>
+    </div>
+    <!-- Bookings table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Customer Name</th>
+                <th>Package</th>
+                <th>Travel Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {# Loop through recent bookings #}
+            {% for b in bookings %}
+            <tr>
+                <td>{{ b.full_name }}</td>
+                <td>{{ b.package_name }}</td>
+                <td>{{ b.travel_date }}</td>
+                <td class="text-accent">{{ b.total_price|money }}</td>
+                <td>
+                    {% set st = (b.status or 'Pending')|lower %}
+                    <span class="badge badge-{{ 'approved' if st in ['approved', 'confirmed', 'completed'] else ('pending' if st == 'pending' else 'cancelled') }}">{{ b.status }}</span>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="empty-state">No recent bookings found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Grid with Recent Payments and Recent Support Reports -->
+<div class="grid-2">
+    <!-- Recent payments card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h2>Recent Payments</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.full_name }}</td>
+                    <td class="text-accent">{{ p.amount|money }}</td>
+                    <td>{{ p.payment_method }}</td>
+                    <td><span class="badge badge-approved">{{ p.status }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-state">No recent payments.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recent customer complaints card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h2>Recent Reports</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Service</th>
+                    <th>Subject</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td>{{ r.full_name }}</td>
+                    <td>{{ r.service_type }}</td>
+                    <td>{{ r.subject }}</td>
+                    <td>
+                        {% set st = (r.status or 'Pending')|lower %}
+                        <span class="badge badge-{{ 'approved' if st == 'resolved' else ('pending' if st == 'pending' else 'cancelled') }}">{{ r.status }}</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-state">No recent reports.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart.js library CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js initialization script rendering monthly revenue gradient curve -->
+<script>
+    {% if chart_values and chart_values|length > 0 %}
+        const ctx = document.getElementById('revenueChart').getContext('2d');  // Get 2D canvas context
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);  // Create vertical gradient
+        gradient.addColorStop(0, 'rgba(132,204,22,0.3)');  // Gradient top accent
+        gradient.addColorStop(1, 'rgba(132,204,22,0)');  // Gradient bottom transparent
+
+        new Chart(ctx, {  // Instantiate new line chart
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|tojson|safe }},  // Month names passed from Flask
+                datasets: [{
+                    label: 'Revenue',
+                    data: {{ chart_values|tojson|safe }},  // Revenue numbers passed from Flask
+                    borderColor: '#84CC16',
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#1F2937',
+                    pointBorderColor: '#84CC16',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] },
+                        ticks: { color: '#9CA3AF' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9CA3AF' }
+                    }
+                }
+            }
+        });
+    {% endif %}
+</script>
+{# Closes content block #}
+{% endblock %}

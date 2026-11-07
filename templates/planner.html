@@ -1,0 +1,162 @@
+{# Inherits base layout from user_base.html #}
+{% extends "user_base.html" %}
+{# Highlights planner in navigation bar #}
+{% set active_page = 'planner' %}
+{# Sets browser title to Travel Planner #}
+{% set page_title = 'Travel Planner' %}
+
+{# Injects trip planner into content block #}
+{% block content %}
+<!-- Page wrapper container -->
+<div class="container">
+    <!-- Header title section with icon -->
+    <div class="page-header text-center">
+        <!-- Map pin illustration icon -->
+        <i class="fa-solid fa-map-location-dot" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+        <!-- Main title -->
+        <h1>Travel Planner</h1>
+        <!-- Subtitle -->
+        <p>Customized itineraries and smart budget planning crafted just for you.</p>
+    </div>
+
+    <!-- Form card for generating personalized itinerary -->
+    <div class="card" style="max-width: 800px; margin: 0 auto 2.5rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem;">Plan Your Custom Trip</h2>
+        <!-- Form submitting trip criteria to planner route -->
+        <form action="{{ url_for('planner') }}" method="POST">
+            <!-- CSRF token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- Form fields in responsive 2-column grid -->
+            <div class="grid-2">
+                <!-- Destination input across both columns -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Destination</label>
+                    <input type="text" name="destination" value="{{ plan.destination if plan and plan.destination else '' }}" placeholder="e.g. Goa, Kerala, Himachal, Kashmir" required>
+                </div>
+                <!-- Trip style dropdown -->
+                <div class="form-group">
+                    <label>Trip Style</label>
+                    <select name="trip_style" required>
+                        <option value="Balanced" {% if plan and plan.trip_style == 'Balanced' %}selected{% endif %}>Balanced (City & Culture)</option>
+                        <option value="Adventure" {% if plan and plan.trip_style == 'Adventure' %}selected{% endif %}>Adventure (Trek & Sports)</option>
+                        <option value="Relax" {% if plan and plan.trip_style in ['Relax', 'Relaxation'] %}selected{% endif %}>Relax (Wellness & Leisure)</option>
+                        <option value="Family" {% if plan and plan.trip_style == 'Family' %}selected{% endif %}>Family (Kid-friendly)</option>
+                        <option value="Luxury" {% if plan and plan.trip_style == 'Luxury' %}selected{% endif %}>Luxury (Premium Escapes)</option>
+                    </select>
+                </div>
+                <!-- Number of days input -->
+                <div class="form-group">
+                    <label>Number of Days (1-30)</label>
+                    <input type="number" name="days" min="1" max="30" value="{{ plan.days if plan and plan.days else 3 }}" required>
+                </div>
+                <!-- Number of travelers input -->
+                <div class="form-group">
+                    <label>Travelers (1-20)</label>
+                    <input type="number" name="travelers" min="1" max="20" value="{{ plan.travelers if plan and plan.travelers else 1 }}" required>
+                </div>
+                <!-- Budget in INR input -->
+                <div class="form-group">
+                    <label>Budget (INR)</label>
+                    <input type="number" name="budget" min="1000" value="{{ plan.budget if plan and plan.budget else 15000 }}" required>
+                </div>
+            </div>
+            <!-- Generate button with sparkle wand icon -->
+            <button type="submit" class="btn-primary w-100" style="margin-top: 1.5rem;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Itinerary
+            </button>
+        </form>
+    </div>
+
+    {# Display generated itinerary if plan exists #}
+    {% if plan %}
+    <!-- Generated plan summary card -->
+    <div class="card" style="max-width: 800px; margin: 0 auto 3rem;">
+        <!-- Header row with destination, style, days, travelers, and estimated budget -->
+        <div class="flex-between" style="border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; margin-bottom: 1.75rem;">
+            <div>
+                <!-- Trip style badge -->
+                <span class="badge badge-approved">{{ plan.trip_style }} Trip</span>
+                <!-- Itinerary title -->
+                <h2 style="margin: 0.75rem 0 0.25rem; font-size: 1.75rem; font-weight: 700;">{{ plan.destination }} Itinerary</h2>
+                <!-- Duration and companions -->
+                <p class="text-muted" style="font-size: 0.9rem; margin: 0;">{{ plan.days }} Days · {{ plan.travelers }} Traveler{% if plan.travelers > 1 %}s{% endif %}</p>
+            </div>
+            <div style="text-align: right;">
+                <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Estimated Budget</span>
+                <!-- Total estimated cost formatted as currency -->
+                <span style="color: var(--accent); font-size: 1.75rem; font-weight: 700;">{{ plan.total_estimate|money }}</span>
+            </div>
+        </div>
+
+        <!-- Section heading for daily schedule -->
+        <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--primary);">
+            <i class="fa-solid fa-calendar-days" style="margin-right: 0.5rem;"></i> Daily Itinerary
+        </h3>
+        <!-- List of day-by-day cards -->
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
+            {# Loop through each scheduled day #}
+            {% for item in plan.itinerary %}
+            <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem;">
+                <div class="flex-between" style="margin-bottom: 0.5rem;">
+                    <!-- Day title -->
+                    <strong style="font-size: 1.05rem;">{{ item.title }}</strong>
+                    <!-- Estimated daily cost -->
+                    <span style="color: var(--accent); font-weight: 600; font-size: 0.95rem;">{{ item.cost|money }}</span>
+                </div>
+                <!-- Activity summary for this day -->
+                <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; margin: 0;">{{ item.plan }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# Display tips if present #}
+        {% if plan.recommendations %}
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;">
+            <i class="fa-solid fa-lightbulb" style="color: var(--accent); margin-right: 0.5rem;"></i> Recommendations
+        </h3>
+        <ul style="color: var(--text-secondary); padding-left: 1.25rem; line-height: 1.8; margin-bottom: 1.75rem; font-size: 0.92rem;">
+            {% for rec in plan.recommendations %}<li>{{ rec }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <!-- Bottom bar linking directly to dashboard -->
+        <div class="flex-between" style="border-top: 1px solid var(--border); padding-top: 1.25rem;">
+            <span style="color: var(--primary); font-weight: 600; font-size: 0.95rem;">
+                <i class="fa-solid fa-circle-check"></i> Saved to your dashboard
+            </span>
+            <a href="{{ url_for('user_dashboard') }}" class="btn-secondary btn-sm">View in Dashboard &rarr;</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Display previously saved plans if available #}
+    {% if saved_plans %}
+    <div class="table-card" style="max-width: 800px; margin: 0 auto 3rem;">
+        <div class="table-card-header">
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600;">Previous Saved Travel Plans</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Destination</th>
+                    <th>Style</th>
+                    <th>Days</th>
+                    <th>Estimate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in saved_plans %}
+                <tr>
+                    <td style="font-weight: 600;">{{ sp.destination }}</td>
+                    <td>{{ sp.trip_style }}</td>
+                    <td>{{ sp.days }} days</td>
+                    <td class="text-accent" style="font-weight: 600;">{{ sp.total_estimate|money }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{# Closes content block #}
+{% endblock %}
